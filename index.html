@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Learnova - Master New Skills Online</title>
+    <meta name="description" content="Unlock your potential with Learnova. Expert-led courses in coding, design, business, and more." />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            },
+            colors: {
+              background: '#ffffff',
+              surface: '#f8f9fa',
+              piku: {
+                cyan: '#2ED4E0',
+                lime: '#D6F32F',
+                purple: '#A855F7',
+                green: '#4CC764',
+                cream: '#FEF8E6',
+                dark: '#0a0a0b',
+                gray: '#F5F5F5'
+              }
+            },
+            animation: {
+              'marquee': 'marquee 30s linear infinite',
+              'marquee-reverse': 'marquee-reverse 30s linear infinite',
+              'float': 'float 6s ease-in-out infinite',
+              'spin-slow': 'spin 12s linear infinite',
+            },
+            keyframes: {
+              marquee: {
+                '0%': { transform: 'translateX(0%)' },
+                '100%': { transform: 'translateX(-100%)' },
+              },
+              'marquee-reverse': {
+                '0%': { transform: 'translateX(-100%)' },
+                '100%': { transform: 'translateX(0%)' },
+              },
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-20px)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #ffffff;
+        color: #0a0a0b;
+        overflow-x: hidden;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+          display: none;
+      }
+      .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "framer-motion": "https://aistudiocdn.com/framer-motion@^12.23.25",
+    "@motionone/utils": "https://aistudiocdn.com/@motionone/utils@^10.18.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

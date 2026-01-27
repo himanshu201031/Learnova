@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --piku-lime: #ccff00;
+  --piku-cyan: #00ffff;
+  --piku-purple: #9d00ff;
+  --piku-cream: #fdfbf7;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Custom Scrollbar - Themed */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #ffffff;
+  border-left: 2px solid #000;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #000000;
+  border-left: 2px solid #ffffff;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #000000;
+  border: 2px solid #000000;
+  border-radius: 0;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border: 2px solid #ffffff;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--piku-purple);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--piku-lime);
+}
+
+/* Animations */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  animation: marquee 20s linear infinite;
+}
+
+/* Utilities */
+.text-stroke-black {
+  -webkit-text-stroke: 2px black;
+}
+
+.text-stroke-white {
+  -webkit-text-stroke: 2px white;
+}
+
+.text-stroke-2 {
+  -webkit-text-stroke-width: 2px;
+}
