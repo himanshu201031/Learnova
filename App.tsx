@@ -22,20 +22,22 @@ const Achievements = React.lazy(() => import('./components/pages/Achievements'))
 const CoursePlayer = React.lazy(() => import('./components/pages/CoursePlayer'));
 const Community = React.lazy(() => import('./components/pages/Community'));
 
-function App() {
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState<Page>('home');
+import { useAuth } from './contexts/AuthContext';
 
-  // Handle Preloader logic
-  if (loading) {
-    return (
-      <AnimatePresence mode='wait'>
-        {loading && <Preloader onComplete={() => setLoading(false)} />}
-      </AnimatePresence>
-    );
-  }
+function AppContent() {
+  const [currentPage, setCurrentPage] = useState<Page>('home');
+  const { isAuthenticated, isLoading } = useAuth();
+
+  useEffect(() => {
+    // If user is authenticated and on login/signup, move to dashboard
+    if (isAuthenticated && ['login', 'signup'].includes(currentPage)) {
+      setCurrentPage('dashboard');
+    }
+  }, [isAuthenticated, currentPage]);
 
   const renderPage = () => {
+    if (isLoading) return <LoadingSpinner />;
+
     switch (currentPage) {
       case 'features':
         return <FeaturesPage />;
@@ -46,13 +48,13 @@ function App() {
       case 'courses':
         return <Courses />;
       case 'dashboard':
-        return <Dashboard />;
+        return isAuthenticated ? <Dashboard /> : <Login onNavigate={setCurrentPage} />;
       case 'achievements':
-        return <Achievements />;
+        return isAuthenticated ? <Achievements /> : <Login onNavigate={setCurrentPage} />;
       case 'course-player':
-        return <CoursePlayer onNavigate={setCurrentPage} />;
+        return isAuthenticated ? <CoursePlayer onNavigate={setCurrentPage} /> : <Login onNavigate={setCurrentPage} />;
       case 'community':
-        return <Community />;
+        return isAuthenticated ? <Community /> : <Login onNavigate={setCurrentPage} />;
       case 'login':
         return <Login onNavigate={setCurrentPage} />;
       case 'signup':
@@ -69,29 +71,44 @@ function App() {
   const showNavbar = !['login', 'signup', 'course-player'].includes(currentPage);
 
   return (
+    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white font-sans transition-colors duration-500">
+      {showNavbar && <Navbar currentPage={currentPage} onNavigate={setCurrentPage} />}
+      <CartDrawer />
+
+      {/* Page Transition Wrapper */}
+      <React.Suspense fallback={<LoadingSpinner />}>
+        <motion.main
+          key={currentPage}
+          initial={{ opacity: 0, scale: 0.98, filter: "blur(10px)" }}
+          animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+          transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }} // Slow, smooth ease-out
+          className="w-full"
+        >
+          {renderPage()}
+        </motion.main>
+      </React.Suspense>
+
+      {showFooter && <Footer onNavigate={setCurrentPage} />}
+    </div>
+  );
+}
+
+function App() {
+  const [loading, setLoading] = useState(true);
+
+  // Handle Preloader logic
+  if (loading) {
+    return (
+      <AnimatePresence mode='wait'>
+        {loading && <Preloader onComplete={() => setLoading(false)} />}
+      </AnimatePresence>
+    );
+  }
+
+  return (
     <AuthProvider>
       <CartProvider>
-        <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white font-sans transition-colors duration-500">
-
-          {showNavbar && <Navbar currentPage={currentPage} onNavigate={setCurrentPage} />}
-          <CartDrawer />
-
-
-          {/* Page Transition Wrapper */}
-          <React.Suspense fallback={<LoadingSpinner />}>
-            <motion.main
-              key={currentPage}
-              initial={{ opacity: 0, scale: 0.98, filter: "blur(10px)" }}
-              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-              transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }} // Slow, smooth ease-out
-              className="w-full"
-            >
-              {renderPage()}
-            </motion.main>
-          </React.Suspense>
-
-          {showFooter && <Footer onNavigate={setCurrentPage} />}
-        </div>
+        <AppContent />
       </CartProvider>
     </AuthProvider >
   );

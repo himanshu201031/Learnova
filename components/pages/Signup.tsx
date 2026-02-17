@@ -18,6 +18,7 @@ const Signup: React.FC<SignupProps> = ({ onNavigate }) => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
     const { signup } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -28,14 +29,40 @@ const Signup: React.FC<SignupProps> = ({ onNavigate }) => {
         try {
             const fullName = `${firstName} ${lastName}`.trim();
             await signup(email, password, fullName);
-            // Redirect to dashboard on successful signup
-            onNavigate('dashboard');
-        } catch (err) {
-            setError('Failed to create account. Please try again.');
+            setSuccess(true);
+        } catch (err: any) {
+            setError(err.message || 'Failed to create account. Please try again.');
         } finally {
             setLoading(false);
         }
     };
+
+    if (success) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black p-6">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="max-w-md w-full bg-white dark:bg-zinc-900 border-4 border-black dark:border-white p-12 rounded-3xl shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] dark:shadow-[16px_16px_0px_0px_rgba(255,255,255,1)] text-center"
+                >
+                    <div className="w-24 h-24 bg-piku-lime rounded-full border-4 border-black flex items-center justify-center mx-auto mb-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                        <Check size={48} strokeWidth={4} />
+                    </div>
+                    <h2 className="text-4xl font-black italic mb-4 tracking-tighter">CHECK YOUR EMAIL</h2>
+                    <p className="text-lg font-bold text-gray-500 mb-8">
+                        We've sent a verification link to <span className="text-black dark:text-white underline">{email}</span>.
+                        Please confirm your account to start learning!
+                    </p>
+                    <Button
+                        onClick={() => onNavigate('login')}
+                        className="w-full text-xl py-6 h-auto shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] bg-piku-purple text-white border-black"
+                    >
+                        Go to Login
+                    </Button>
+                </motion.div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex bg-white dark:bg-black transition-colors duration-500 font-sans">

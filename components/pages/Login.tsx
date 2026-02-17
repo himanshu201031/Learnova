@@ -15,7 +15,7 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
+    const { login, signInWithGoogle, signInWithGithub } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -186,10 +186,16 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <button className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-black dark:border-white rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]">
+                            <button
+                                onClick={() => signInWithGoogle()}
+                                className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-black dark:border-white rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+                            >
                                 Google
                             </button>
-                            <button className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-black dark:border-white rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]">
+                            <button
+                                onClick={() => signInWithGithub()}
+                                className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-black dark:border-white rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+                            >
                                 GitHub
                             </button>
                         </div>
