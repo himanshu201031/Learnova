@@ -1,57 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MessageSquare, Search, Filter, ThumbsUp, MessageCircle, Share2, MoreHorizontal, User } from 'lucide-react';
+import { MessageSquare, Search, Filter, ThumbsUp, MessageCircle, Share2, MoreHorizontal, User, Loader2 } from 'lucide-react';
 import Button from '../ui/Button';
+import { communityService } from '../../services/community.service';
+import LoadingSpinner from '../ui/LoadingSpinner';
 
-// Mock discussions data
-const mockDiscussions = [
+// Mock discussions data fallback
+const mockDiscussionsFallback = [
     {
-        id: 1,
+        id: '1',
         title: "Best resources for learning Advanced React patterns?",
-        author: "Sarah Jenkins",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
+        user: { full_name: "Sarah Jenkins", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" },
         category: "React",
         tags: ["Frontend", "Resources", "Advanced"],
         upvotes: 45,
         comments: 12,
-        time: "2 hours ago",
-        preview: "I've been working with React for about a year now and I want to level up my skills. I'm looking for resources that cover advanced patterns like Compound Components, Control Props, etc..."
+        created_at: "2 hours ago",
+        content: "I've been working with React for about a year now and I want to level up my skills. I'm looking for resources that cover advanced patterns like Compound Components, Control Props, etc..."
     },
     {
-        id: 2,
+        id: '2',
         title: "Help understanding Docker networking for microservices",
-        author: "Mike Chen",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike",
+        user: { full_name: "Mike Chen", avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike" },
         category: "DevOps",
         tags: ["Docker", "Microservices", "Networking"],
         upvotes: 28,
         comments: 8,
-        time: "4 hours ago",
-        preview: "I'm trying to set up a local development environment with multiple microservices using Docker Compose, but I'm having trouble getting them to communicate with each other..."
-    },
-    {
-        id: 3,
-        title: "Showcase: My first portfolio built with Learnova!",
-        author: "Jessica Li",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jessica",
-        category: "Showcase",
-        tags: ["Portfolio", "Frontend", "Design"],
-        upvotes: 156,
-        comments: 34,
-        time: "1 day ago",
-        preview: "Hey everyone! I just finished the Web Development Bootcamp and built my portfolio website. I'd love to get some feedback on the design and code structure..."
-    },
-    {
-        id: 4,
-        title: "Is Python still the king of AI/ML in 2024?",
-        author: "David Ross",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=David",
-        category: "Data Science",
-        tags: ["Python", "AI", "Discussion"],
-        upvotes: 89,
-        comments: 45,
-        time: "1 day ago",
-        preview: "With the rise of other languages like Mojo and Julia, discussions have been popping up about Python's dominance. What do you all think? Is it worth investing time in..."
+        created_at: "4 hours ago",
+        content: "I'm trying to set up a local development environment with multiple microservices using Docker Compose, but I'm having trouble getting them to communicate with each other..."
     }
 ];
 
@@ -59,6 +35,39 @@ const categories = ["All", "General", "React", "Frontend", "Backend", "DevOps", 
 
 const Community: React.FC = () => {
     const [activeCategory, setActiveCategory] = useState("All");
+    const [posts, setPosts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchPosts = async () => {
+        setLoading(true);
+        try {
+            const { data, error } = await communityService.getForumPosts();
+            if (data && data.length > 0) {
+                setPosts(data);
+            } else {
+                setPosts(mockDiscussionsFallback);
+            }
+        } catch (error) {
+            console.error('Failed to fetch posts:', error);
+            setPosts(mockDiscussionsFallback);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPosts();
+
+        const subscription = communityService.subscribeToNewPosts(() => {
+            fetchPosts();
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, []);
+
+    if (loading) return <LoadingSpinner />;
 
     return (
         <div className="pt-32 pb-20 bg-gray-50 dark:bg-black min-h-screen transition-colors duration-500">
@@ -116,8 +125,8 @@ const Community: React.FC = () => {
                                             key={cat}
                                             onClick={() => setActiveCategory(cat)}
                                             className={`w-full text-left px-4 py-2 rounded-lg font-bold transition-all border-2 ${activeCategory === cat
-                                                    ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white'
-                                                    : 'bg-transparent border-transparent hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-gray-400'
+                                                ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white'
+                                                : 'bg-transparent border-transparent hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-gray-400'
                                                 }`}
                                         >
                                             {cat}
@@ -142,7 +151,7 @@ const Community: React.FC = () => {
 
                     {/* Main Feed */}
                     <div className="lg:col-span-3 space-y-6">
-                        {mockDiscussions.map((post, i) => (
+                        {posts.map((post, i) => (
                             <motion.div
                                 key={post.id}
                                 initial={{ opacity: 0, y: 20 }}
@@ -156,21 +165,25 @@ const Community: React.FC = () => {
                                         <button className="text-gray-400 hover:text-piku-purple transition-colors">
                                             <ThumbsUp size={24} />
                                         </button>
-                                        <span className="font-black text-lg">{post.upvotes}</span>
+                                        <span className="font-black text-lg">{post.upvotes || 0}</span>
                                     </div>
 
                                     <div className="flex-1">
                                         {/* Meta Row */}
                                         <div className="flex items-center gap-3 mb-2 text-sm">
                                             <div className="flex items-center gap-2">
-                                                <img src={post.avatar} alt={post.author} className="w-6 h-6 rounded-full border border-black dark:border-white" />
-                                                <span className="font-bold text-black dark:text-white">{post.author}</span>
+                                                <img src={post.user?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user?.full_name}`} alt={post.user?.full_name} className="w-6 h-6 rounded-full border border-black dark:border-white" />
+                                                <span className="font-bold text-black dark:text-white">{post.user?.full_name}</span>
                                             </div>
                                             <span className="text-gray-400">•</span>
-                                            <span className="text-gray-500 font-medium">{post.time}</span>
+                                            <span className="text-gray-500 font-medium">
+                                                {typeof post.created_at === 'string' && post.created_at.includes('ago')
+                                                    ? post.created_at
+                                                    : new Date(post.created_at).toLocaleDateString()}
+                                            </span>
                                             <span className="text-gray-400">•</span>
                                             <span className="px-2 py-0.5 bg-gray-100 dark:bg-zinc-800 rounded-md font-bold text-xs uppercase text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-zinc-700">
-                                                {post.category}
+                                                {post.category || 'General'}
                                             </span>
                                         </div>
 
@@ -179,13 +192,13 @@ const Community: React.FC = () => {
                                             {post.title}
                                         </h3>
                                         <p className="text-gray-600 dark:text-gray-400 font-medium mb-4 line-clamp-2">
-                                            {post.preview}
+                                            {post.content}
                                         </p>
 
                                         {/* Footer Row */}
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                {post.tags.map(tag => (
+                                                {(post.tags || []).map((tag: string) => (
                                                     <span key={tag} className="text-xs font-bold text-piku-purple bg-piku-purple/10 px-2 py-1 rounded-md">
                                                         #{tag}
                                                     </span>
@@ -194,10 +207,10 @@ const Community: React.FC = () => {
 
                                             <div className="flex items-center gap-4 text-gray-500 font-bold text-sm">
                                                 <div className="flex items-center gap-1 md:hidden">
-                                                    <ThumbsUp size={16} /> {post.upvotes}
+                                                    <ThumbsUp size={16} /> {post.upvotes || 0}
                                                 </div>
                                                 <div className="flex items-center gap-1 hover:text-black dark:hover:text-white transition-colors">
-                                                    <MessageCircle size={18} /> {post.comments} Comments
+                                                    <MessageCircle size={18} /> {post.comments_count || 0} Comments
                                                 </div>
                                                 <div className="flex items-center gap-1 hover:text-black dark:hover:text-white transition-colors">
                                                     <Share2 size={18} /> Share
@@ -211,8 +224,8 @@ const Community: React.FC = () => {
 
                         {/* Pagination / Load More */}
                         <div className="text-center py-8">
-                            <Button variant="outline" className="border-2 border-black dark:border-white">
-                                Load More Discussions
+                            <Button variant="outline" className="border-2 border-black dark:border-white" onClick={fetchPosts}>
+                                Refresh Feed
                             </Button>
                         </div>
                     </div>

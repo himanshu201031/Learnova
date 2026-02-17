@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Check, X } from 'lucide-react';
-import { mockNotifications } from '../../data/mockData';
+import { Bell, Check, X, Loader2 } from 'lucide-react';
+import { notificationService } from '../../services/notification.service';
+import { useAuth } from '../../contexts/AuthContext';
+import { Notification } from '../../types';
 
 interface NotificationCenterProps {
     isOpen: boolean;
@@ -9,6 +11,50 @@ interface NotificationCenterProps {
 }
 
 const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, onClose }) => {
+    const { user } = useAuth();
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchNotifications = async () => {
+        if (!user) return;
+        setIsLoading(true);
+        try {
+            const { data } = await notificationService.getNotifications(user.id, { limit: 10 });
+            if (data) setNotifications(data);
+        } catch (error) {
+            console.error('Failed to fetch notifications:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (isOpen && user) {
+            fetchNotifications();
+
+            // Subscribe to new notifications
+            const subscription = notificationService.subscribeToNotifications(user.id, (payload) => {
+                const newNotif = payload.new as Notification;
+                setNotifications(prev => [newNotif, ...prev].slice(0, 10));
+            });
+
+            return () => {
+                subscription.unsubscribe();
+            };
+        }
+    }, [isOpen, user]);
+
+    const handleMarkAllAsRead = async () => {
+        if (!user) return;
+        await notificationService.markAllAsRead(user.id);
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    };
+
+    const handleMarkAsRead = async (id: string) => {
+        await notificationService.markAsRead(id);
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    };
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -23,19 +69,29 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, onClose
                         <h3 className="font-black text-lg text-black dark:text-white flex items-center gap-2">
                             <Bell size={20} className="fill-current" /> Notifications
                         </h3>
-                        <button className="text-xs font-bold text-piku-purple hover:underline">
-                            Mark all as read
-                        </button>
+                        {notifications.some(n => !n.read) && (
+                            <button
+                                onClick={handleMarkAllAsRead}
+                                className="text-xs font-bold text-piku-purple hover:underline"
+                            >
+                                Mark all as read
+                            </button>
+                        )}
                     </div>
 
                     {/* List */}
                     <div className="max-h-[400px] overflow-y-auto">
-                        {mockNotifications.length > 0 ? (
+                        {isLoading ? (
+                            <div className="p-12 flex justify-center">
+                                <Loader2 className="animate-spin text-piku-purple" size={32} />
+                            </div>
+                        ) : notifications.length > 0 ? (
                             <div className="divide-y-2 divide-gray-100 dark:divide-zinc-800">
-                                {mockNotifications.map((notif) => (
+                                {notifications.map((notif) => (
                                     <div
                                         key={notif.id}
-                                        className={`p-4 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors relative group ${!notif.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
+                                        onClick={() => !notif.read && handleMarkAsRead(notif.id)}
+                                        className={`p-4 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors relative group cursor-pointer ${!notif.read ? 'bg-blue-50/50 dark:bg-piku-purple/10' : ''}`}
                                     >
                                         {!notif.read && (
                                             <div className="absolute top-4 right-4 w-2 h-2 bg-piku-purple rounded-full"></div>
@@ -46,7 +102,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, onClose
                                             {notif.message}
                                         </p>
                                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                                            {notif.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
                                 ))}

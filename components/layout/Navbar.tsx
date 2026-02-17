@@ -7,6 +7,7 @@ import { Page } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import NotificationCenter from '../ui/NotificationCenter';
+import { notificationService } from '../../services/notification.service';
 
 interface NavbarProps {
   currentPage: Page;
@@ -22,6 +23,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
   const { scrollY } = useScroll();
   const { user, isAuthenticated, logout } = useAuth();
   const { cart, setIsCartOpen } = useCart();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setIsScrolled(latest > 20);
@@ -43,6 +45,26 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
       document.documentElement.classList.remove('dark');
     }
   }, [isDark]);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const fetchUnreadCount = async () => {
+        const { data } = await notificationService.getUnreadCount(user.id);
+        setUnreadCount(data || 0);
+      };
+
+      fetchUnreadCount();
+
+      // Subscribe to changes
+      const subscription = notificationService.subscribeToNotifications(user.id, () => {
+        fetchUnreadCount();
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [isAuthenticated, user]);
 
   const navLinks: { name: string; value: Page }[] = [
     { name: 'Features', value: 'features' },
@@ -143,9 +165,11 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
                     className="w-12 h-12 rounded-full border-2 border-black dark:border-white flex items-center justify-center bg-white dark:bg-black text-black dark:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                   >
                     <Bell size={20} />
-                    <span className="absolute top-0 right-0 w-4 h-4 bg-piku-purple border-2 border-white dark:border-black rounded-full text-[10px] font-black text-white flex items-center justify-center transform translate-x-1 -translate-y-1">
-                      3
-                    </span>
+                    {unreadCount > 0 && (
+                      <span className="absolute top-0 right-0 w-4 h-4 bg-piku-purple border-2 border-white dark:border-black rounded-full text-[10px] font-black text-white flex items-center justify-center transform translate-x-1 -translate-y-1">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
                   </button>
                   <NotificationCenter isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
                 </div>
@@ -206,16 +230,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
               <>
                 <Button
                   size="md"
-                  variant="secondary"
-                  className="hidden lg:inline-flex bg-white hover:bg-gray-50 font-bold border-2 border-black dark:border-white dark:bg-black dark:text-white dark:hover:bg-zinc-800 dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
-                  onClick={() => handleNavClick('login')}
-                >
-                  Log In
-                </Button>
-                <Button
-                  size="md"
                   variant="primary"
-                  onClick={() => handleNavClick('signup')}
+                  onClick={() => handleNavClick('login')}
                   className="dark:border-white dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
                 >
                   Get Started
@@ -277,8 +293,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
                 transition={{ delay: 0.4 }}
                 className="flex flex-col gap-4 w-full max-w-sm mt-8 md:mt-12"
               >
-                <Button className="w-full bg-white text-black border-2 border-black text-xl h-14 md:h-16 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" variant="secondary" onClick={() => handleNavClick('login')}>Log In</Button>
-                <Button className="w-full bg-black text-white hover:bg-gray-900 border-none text-xl h-14 md:h-16 shadow-[6px_6px_0px_0px_rgba(255,255,255,0.5)]" variant="dark" onClick={() => handleNavClick('signup')}>Get Started</Button>
+                <Button className="w-full bg-black text-white hover:bg-gray-900 border-none text-xl h-14 md:h-16 shadow-[6px_6px_0px_0px_rgba(255,255,255,0.5)]" variant="dark" onClick={() => handleNavClick('login')}>Get Started Now</Button>
               </motion.div>
             </div>
           </motion.div>

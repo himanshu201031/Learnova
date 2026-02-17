@@ -151,7 +151,13 @@ const FeatureCard: React.FC<{ feature: any; index: number }> = ({ feature, index
     );
 };
 
-const FeaturesPage: React.FC = () => {
+import { Page } from '../../types';
+
+interface FeaturesPageProps {
+    onNavigate: (page: Page) => void;
+}
+
+const FeaturesPage: React.FC<FeaturesPageProps> = ({ onNavigate }) => {
     const { scrollY } = useScroll();
     const yText = useTransform(scrollY, [0, 500], [0, 100]);
 
@@ -188,7 +194,7 @@ const FeaturesPage: React.FC = () => {
                     </p>
 
                     <div className="flex justify-center gap-6">
-                        <Button size="lg" className="h-20 px-12 text-xl bg-black text-white hover:bg-piku-lime hover:text-black border-4 border-black dark:border-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
+                        <Button onClick={() => onNavigate('courses')} size="lg" className="h-20 px-12 text-xl bg-black text-white hover:bg-piku-lime hover:text-black border-4 border-black dark:border-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
                             Start Exploring <ArrowUpRight className="ml-2" size={24} />
                         </Button>
                     </div>
@@ -260,7 +266,7 @@ const FeaturesPage: React.FC = () => {
                                 ACCESS <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-piku-purple to-piku-cyan">GRANTED</span>
                             </h2>
-                            <Button size="lg" className="bg-piku-cyan text-black border-4 border-black text-2xl px-16 h-20 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-2 hover:translate-y-2">
+                            <Button onClick={() => onNavigate('login')} size="lg" className="bg-piku-cyan text-black border-4 border-black text-2xl px-16 h-20 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-2 hover:translate-y-2">
                                 Enter Platform
                             </Button>
                         </div>

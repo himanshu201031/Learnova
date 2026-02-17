@@ -5,6 +5,8 @@ import Button from '../ui/Button';
 import { useCart } from '../../contexts/CartContext';
 import { Course } from '../../types';
 import OptimizedImage from '../ui/OptimizedImage';
+import { courseService } from '../../services';
+import LoadingSpinner from '../ui/LoadingSpinner';
 
 // Mock data with IDs compatible with Course type
 const coursesData: (Partial<Course> & { id: string; img: string; author: string; students: string; time: string; date: string })[] = [
@@ -92,14 +94,44 @@ const Courses: React.FC = () => {
     const [selectedTag, setSelectedTag] = useState('All');
     const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
     const [priceRange, setPriceRange] = useState<'All' | 'Under 20' | '20-50' | '50+'>('All');
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [loading, setLoading] = useState(true);
     const { addToCart } = useCart();
 
-    const parseStudents = (s: string) => {
+    React.useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            try {
+                const { data } = await courseService.getCourses();
+                if (data && data.length > 0) {
+                    setCourses(data);
+                } else {
+                    // Fallback to mock data if DB is empty
+                    // @ts-ignore
+                    setCourses(coursesData.map(c => ({
+                        ...c,
+                        instructor: { id: 'inst-1', name: c.author } as any,
+                        thumbnail: c.img,
+                        createdAt: new Date(c.date),
+                        updatedAt: new Date(c.date)
+                    })));
+                }
+            } catch (error) {
+                console.error('Failed to fetch courses:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, []);
+
+    const parseStudents = (s: string | number) => {
+        if (typeof s === 'number') return s;
         const num = parseFloat(s.replace(/[^0-9.]/g, ''));
         return s.toLowerCase().includes('k') ? num * 1000 : num;
     };
 
-    const filteredCourses = coursesData.filter(course => {
+    const filteredCourses = courses.filter(course => {
         if (selectedTag !== 'All' && !course.tags!.includes(selectedTag)) return false;
         if (selectedLevels.length > 0 && !selectedLevels.includes(course.level as string)) return false;
         if (typeof course.price === 'number') {
@@ -109,6 +141,8 @@ const Courses: React.FC = () => {
         }
         return true;
     });
+
+    if (loading) return <LoadingSpinner />;
 
     const sortedCourses = [...filteredCourses].sort((a, b) => {
         // @ts-ignore
@@ -131,27 +165,8 @@ const Courses: React.FC = () => {
         );
     };
 
-    // Helper to convert mock course to full Course type for cart
-    const handleAddToCart = (item: typeof coursesData[0]) => {
-        const fullCourse: Course = {
-            id: item.id,
-            title: item.title as string,
-            description: item.description as string,
-            price: item.price as number,
-            thumbnail: item.img,
-            instructor: { id: `inst-${item.id}`, name: item.author } as any,
-            slug: item.slug as string,
-            level: item.level as any,
-            category: item.category as string,
-            rating: item.rating as number,
-            studentsCount: parseStudents(item.students),
-            duration: item.time,
-            lessonsCount: item.lessonsCount,
-            tags: item.tags as string[],
-            createdAt: new Date(item.date),
-            updatedAt: new Date(item.date),
-        };
-        addToCart(fullCourse);
+    const handleAddToCart = (course: Course) => {
+        addToCart(course);
     };
 
     return (
@@ -292,7 +307,7 @@ const Courses: React.FC = () => {
                                     <div className="h-60 relative overflow-hidden border-b-4 border-black dark:border-white">
                                         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors z-10"></div>
                                         <OptimizedImage
-                                            src={course.img}
+                                            src={course.thumbnail || (course as any).img}
                                             alt={course.title}
                                             containerClassName="w-full h-full"
                                             className="group-hover:scale-110 transition-transform duration-700"
@@ -320,9 +335,9 @@ const Courses: React.FC = () => {
 
                                             <div className="flex items-center gap-3 mb-6">
                                                 <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border-2 border-black">
-                                                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${course.author}`} alt="avatar" />
+                                                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${course.instructor?.name || (course as any).author}`} alt="avatar" />
                                                 </div>
-                                                <div className="text-sm font-bold text-gray-500 dark:text-gray-400">By {course.author}</div>
+                                                <div className="text-sm font-bold text-gray-500 dark:text-gray-400">By {course.instructor?.name || (course as any).author}</div>
                                             </div>
                                         </div>
 
@@ -348,8 +363,8 @@ const Courses: React.FC = () => {
                                                 <p className="font-bold text-black/60 dark:text-white/80">Join the cohort today.</p>
                                             </div>
                                             <div className="flex gap-4 text-sm font-black text-black dark:text-white border-y-2 border-black/10 dark:border-white/20 py-4 w-full justify-center">
-                                                <span className="flex items-center gap-1"><User size={18} /> {course.students}</span>
-                                                <span className="flex items-center gap-1"><Clock size={18} /> {course.time}</span>
+                                                <span className="flex items-center gap-1"><User size={18} /> {parseStudents(course.studentsCount || (course as any).students)}</span>
+                                                <span className="flex items-center gap-1"><Clock size={18} /> {course.duration || (course as any).time}</span>
                                             </div>
 
                                             {/* Enhanced Add to Cart Button */}

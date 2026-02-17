@@ -80,21 +80,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             console.log('Auth state changed:', event);
 
             if (event === 'SIGNED_IN' && session?.user) {
-                const { data: userProfile } = await authService.getUserProfile(session.user.id);
+                let { data: userProfile, error: profileError } = await authService.getUserProfile(session.user.id);
 
-                if (userProfile) {
-                    setAuthState({
-                        user: userProfile,
-                        isAuthenticated: true,
-                        isLoading: false,
+                // If profile is missing, try to create it (especially for OAuth users)
+                if (!userProfile && !profileError) {
+                    const { data: newProfile } = await authService.updateProfile(session.user.id, {
+                        full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Learner',
+                        avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture
                     });
+
+                    if (newProfile) {
+                        const { data: updatedProfile } = await authService.getUserProfile(session.user.id);
+                        userProfile = updatedProfile;
+                    }
                 }
+
+                setAuthState({
+                    user: userProfile,
+                    isAuthenticated: !!userProfile,
+                    isLoading: false,
+                });
             } else if (event === 'SIGNED_OUT') {
                 setAuthState({
                     user: null,
                     isAuthenticated: false,
                     isLoading: false,
                 });
+            } else if (event === 'INITIAL_SESSION' && !session) {
+                setAuthState(prev => ({ ...prev, isLoading: false }));
             }
         });
 

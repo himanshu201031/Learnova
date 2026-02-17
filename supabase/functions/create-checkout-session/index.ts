@@ -32,7 +32,7 @@ serve(async (req) => {
         // Get course details
         const { data: course, error: courseError } = await supabase
             .from('courses')
-            .select('id, title, price')
+            .select('id, title, price, stripe_price_id')
             .eq('id', courseId)
             .single();
 
@@ -52,22 +52,24 @@ serve(async (req) => {
             throw new Error('User already enrolled in this course');
         }
 
+        const lineItem: Stripe.Checkout.SessionCreateParams.LineItem = course.stripe_price_id
+            ? { price: course.stripe_price_id, quantity: 1 }
+            : {
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: course.title,
+                        description: `Enrollment for ${course.title}`,
+                    },
+                    unit_amount: Math.round(course.price * 100),
+                },
+                quantity: 1,
+            };
+
         // Create Stripe Checkout session
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
-            line_items: [
-                {
-                    price_data: {
-                        currency: 'usd',
-                        product_data: {
-                            name: course.title,
-                            description: `Enrollment for ${course.title}`,
-                        },
-                        unit_amount: Math.round(course.price * 100), // Convert to cents
-                    },
-                    quantity: 1,
-                },
-            ],
+            line_items: [lineItem],
             mode: 'payment',
             success_url: `${req.headers.get('origin')}/courses/${courseId}?success=true`,
             cancel_url: `${req.headers.get('origin')}/courses/${courseId}?canceled=true`,

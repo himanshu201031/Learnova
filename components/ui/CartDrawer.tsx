@@ -3,9 +3,45 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, ShoppingBag, ArrowRight, CreditCard } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
 import Button from '../ui/Button';
+import { paymentService } from '../../services/payment.service';
+import { useAuth } from '../../contexts/AuthContext';
 
 const CartDrawer: React.FC = () => {
+    const [isCheckoutLoading, setIsCheckoutLoading] = React.useState(false);
     const { cart, removeFromCart, cartTotal, isCartOpen, setIsCartOpen, clearCart } = useCart();
+    const { isAuthenticated } = useAuth();
+
+    const handleCheckout = async () => {
+        if (!isAuthenticated) {
+            // Should probably redirect to login or show alert
+            alert('Please log in to checkout');
+            return;
+        }
+
+        if (cart.length === 0) return;
+
+        setIsCheckoutLoading(true);
+        try {
+            // For now, handle the first item in the cart as a single checkout
+            // In a production app, you'd send all IDs or a cart reference
+            const courseId = cart[0].id;
+            const { data, error } = await paymentService.createCheckoutSession(courseId);
+
+            if (error) throw new Error(error);
+
+            if (data?.url) {
+                // Redirect to Stripe Checkout
+                window.location.href = data.url;
+            } else {
+                throw new Error('No checkout URL returned');
+            }
+        } catch (error: any) {
+            console.error('Checkout failed:', error);
+            alert(`Checkout failed: ${error.message}`);
+        } finally {
+            setIsCheckoutLoading(false);
+        }
+    };
 
     return (
         <AnimatePresence>
@@ -100,8 +136,13 @@ const CartDrawer: React.FC = () => {
                                 </div>
 
                                 <div className="pt-4 space-y-3">
-                                    <Button size="lg" className="w-full text-lg h-14 bg-piku-lime text-black border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 justify-center">
-                                        Checkout Now <ArrowRight className="ml-2" size={20} />
+                                    <Button
+                                        onClick={handleCheckout}
+                                        disabled={isCheckoutLoading}
+                                        size="lg"
+                                        className="w-full text-lg h-14 bg-piku-lime text-black border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 justify-center disabled:opacity-50"
+                                    >
+                                        {isCheckoutLoading ? 'Processing...' : 'Checkout Now'} <ArrowRight className="ml-2" size={20} />
                                     </Button>
                                     <p className="text-xs text-center text-gray-500 font-medium flex items-center justify-center gap-1">
                                         <CreditCard size={12} /> Secure Checkout

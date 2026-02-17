@@ -14,7 +14,13 @@ const mentors = [
 
 type Mentor = typeof mentors[0];
 
-const MentorCard: React.FC<{ m: Mentor; i: number }> = ({ m, i }) => {
+import { Page } from '../../types';
+
+interface MentorsProps {
+    onNavigate: (page: Page) => void;
+}
+
+const MentorCard: React.FC<{ m: Mentor; i: number; onNavigate: (page: Page) => void }> = ({ m, i, onNavigate }) => {
     return (
         <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -25,10 +31,10 @@ const MentorCard: React.FC<{ m: Mentor; i: number }> = ({ m, i }) => {
         >
             {/* Background Image */}
             <div className="absolute inset-0 bg-black">
-                <img 
-                    src={m.img} 
-                    alt={m.name} 
-                    className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100 grayscale group-hover:grayscale-0" 
+                <img
+                    src={m.img}
+                    alt={m.name}
+                    className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100 grayscale group-hover:grayscale-0"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90 transition-opacity duration-300 group-hover:opacity-70" />
             </div>
@@ -56,70 +62,70 @@ const MentorCard: React.FC<{ m: Mentor; i: number }> = ({ m, i }) => {
 
                 <div className="space-y-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
                     <div className="flex items-center gap-4 text-gray-300 text-sm font-medium">
-                        <span className="flex items-center gap-1"><Users size={14}/> {m.students} Students</span>
-                        <span className="flex items-center gap-1"><Briefcase size={14}/> 10+ Years Exp</span>
+                        <span className="flex items-center gap-1"><Users size={14} /> {m.students} Students</span>
+                        <span className="flex items-center gap-1"><Briefcase size={14} /> 10+ Years Exp</span>
                     </div>
 
                     <div className="flex gap-3 pt-4 border-t border-white/20">
-                         <Button size="sm" className="flex-1 bg-white text-black hover:bg-piku-lime border-none">
+                        <Button onClick={() => onNavigate('login')} size="sm" className="flex-1 bg-white text-black hover:bg-piku-lime border-none">
                             Book Session
-                         </Button>
-                         <div className="flex gap-2">
+                        </Button>
+                        <div className="flex gap-2">
                             <button className="w-10 h-10 rounded-full bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors">
-                                <Linkedin size={18}/>
+                                <Linkedin size={18} />
                             </button>
                             <button className="w-10 h-10 rounded-full bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors">
-                                <Twitter size={18}/>
+                                <Twitter size={18} />
                             </button>
-                         </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            
+
             {/* Hover Glow Border */}
             <div className="absolute inset-0 border-4 border-piku-lime opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[1.8rem] pointer-events-none" />
         </motion.div>
     );
 };
 
-const Mentors: React.FC = () => {
-  return (
-    <div className="pt-32 pb-20 bg-white dark:bg-black min-h-screen transition-colors duration-500">
-       <div className="container mx-auto px-6">
-            <div className="text-center mb-20 max-w-2xl mx-auto">
-                 <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="inline-flex items-center gap-2 bg-gray-100 dark:bg-zinc-900 dark:text-white border border-black/10 dark:border-white/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4"
-                 >
-                    <Users size={14} /> World Class Experts
-                 </motion.div>
-                 <motion.h1 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="text-6xl font-black italic mb-6 dark:text-white"
-                 >
-                    Meet Your <span className="text-piku-lime bg-black dark:bg-white dark:text-black px-4 transform skew-x-[-10deg] inline-block">Mentors</span>
-                 </motion.h1>
-                 <motion.p 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-xl font-medium text-gray-600 dark:text-gray-400"
-                 >
-                    Learn directly from experts who have built the products you use every day.
-                 </motion.p>
-            </div>
+const Mentors: React.FC<MentorsProps> = ({ onNavigate }) => {
+    return (
+        <div className="pt-32 pb-20 bg-white dark:bg-black min-h-screen transition-colors duration-500">
+            <div className="container mx-auto px-6">
+                <div className="text-center mb-20 max-w-2xl mx-auto">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="inline-flex items-center gap-2 bg-gray-100 dark:bg-zinc-900 dark:text-white border border-black/10 dark:border-white/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4"
+                    >
+                        <Users size={14} /> World Class Experts
+                    </motion.div>
+                    <motion.h1
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="text-6xl font-black italic mb-6 dark:text-white"
+                    >
+                        Meet Your <span className="text-piku-lime bg-black dark:bg-white dark:text-black px-4 transform skew-x-[-10deg] inline-block">Mentors</span>
+                    </motion.h1>
+                    <motion.p
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="text-xl font-medium text-gray-600 dark:text-gray-400"
+                    >
+                        Learn directly from experts who have built the products you use every day.
+                    </motion.p>
+                </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {mentors.map((m, i) => (
-                    <MentorCard key={i} m={m} i={i} />
-                ))}
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {mentors.map((m, i) => (
+                        <MentorCard key={i} m={m} i={i} onNavigate={onNavigate} />
+                    ))}
+                </div>
             </div>
-       </div>
-    </div>
-  );
+        </div>
+    );
 };
 
 export default Mentors;

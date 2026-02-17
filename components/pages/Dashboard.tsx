@@ -4,12 +4,43 @@ import { BookOpen, Clock, Trophy, Flame, TrendingUp, Play, Award, Target, Calend
 import { useAuth } from '../../contexts/AuthContext';
 import { mockEnrollments, mockUserStats, mockAchievements } from '../../data/mockData';
 import Button from '../ui/Button';
+import LoadingSpinner from '../ui/LoadingSpinner';
+import { enrollmentService, achievementService } from '../../services';
+import { Enrollment, UserStats, Achievement } from '../../types';
 
 const Dashboard: React.FC = () => {
     const { user } = useAuth();
-    const stats = mockUserStats;
-    const enrollments = mockEnrollments;
-    const recentAchievements = mockAchievements.slice(0, 3);
+    const [enrollments, setEnrollments] = React.useState<Enrollment[]>([]);
+    const [stats, setStats] = React.useState<UserStats>(mockUserStats);
+    const [achievements, setAchievements] = React.useState<Achievement[]>([]);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const fetchDashboardData = async () => {
+            if (!user) return;
+            setLoading(true);
+            try {
+                const { data: userEnrs } = await enrollmentService.getUserEnrollments(user.id);
+                if (userEnrs) setEnrollments(userEnrs);
+
+                const { data: userAchievs } = await achievementService.getUserAchievements(user.id);
+                if (userAchievs) setAchievements(userAchievs.map(ua => ua.achievement));
+
+                // Fetch stats or use mock if not implemented
+                // For now keep mockUserStats as base
+            } catch (error) {
+                console.error('Failed to fetch dashboard data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+    }, [user]);
+
+    const recentAchievements = achievements.length > 0 ? achievements.slice(0, 3) : mockAchievements.slice(0, 3);
+
+    if (loading) return <LoadingSpinner />;
 
     // Calculate streak calendar (last 30 days)
     const generateStreakData = () => {
@@ -86,76 +117,85 @@ const Dashboard: React.FC = () => {
                             </div>
 
                             <div className="space-y-4">
-                                {enrollments.map((enrollment, i) => (
-                                    <motion.div
-                                        key={enrollment.id}
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: 0.3 + i * 0.1 }}
-                                        className="group bg-white dark:bg-zinc-900 rounded-[2rem] border-4 border-black dark:border-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[0px_0px_20px_rgba(255,255,255,0.2)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all overflow-hidden"
-                                    >
-                                        <div className="flex flex-col md:flex-row">
-                                            {/* Thumbnail */}
-                                            <div className="md:w-48 h-48 md:h-auto relative overflow-hidden border-b-4 md:border-b-0 md:border-r-4 border-black dark:border-white flex-shrink-0">
-                                                <img
-                                                    src={enrollment.course.thumbnail}
-                                                    alt={enrollment.course.title}
-                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                                />
-                                                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
-                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                    <div className="w-16 h-16 bg-white dark:bg-black rounded-full flex items-center justify-center border-4 border-black dark:border-white group-hover:scale-110 transition-transform">
-                                                        <Play className="w-8 h-8 text-black dark:text-white fill-black dark:fill-white ml-1" />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Content */}
-                                            <div className="flex-1 p-6 md:p-8">
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <div>
-                                                        <h3 className="text-2xl font-black text-black dark:text-white mb-2 group-hover:text-piku-purple dark:group-hover:text-piku-lime transition-colors">
-                                                            {enrollment.course.title}
-                                                        </h3>
-                                                        <div className="flex items-center gap-3 text-sm font-bold text-gray-500 dark:text-gray-400">
-                                                            <span className="flex items-center gap-1">
-                                                                <BookOpen size={16} />
-                                                                {enrollment.course.lessonsCount} lessons
-                                                            </span>
-                                                            <span className="flex items-center gap-1">
-                                                                <Clock size={16} />
-                                                                {enrollment.course.duration}
-                                                            </span>
+                                {enrollments.length === 0 ? (
+                                    <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border-4 border-black dark:border-white p-12 text-center">
+                                        <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                                        <h3 className="text-2xl font-black mb-2">No courses yet!</h3>
+                                        <p className="font-bold text-gray-500 mb-6">Start your journey by enrolling in your first course.</p>
+                                        <Button className="border-2 border-black dark:border-white">Browse Courses</Button>
+                                    </div>
+                                ) : (
+                                    enrollments.map((enrollment, i) => (
+                                        <motion.div
+                                            key={enrollment.id}
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 0.3 + i * 0.1 }}
+                                            className="group bg-white dark:bg-zinc-900 rounded-[2rem] border-4 border-black dark:border-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[0px_0px_20px_rgba(255,255,255,0.2)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all overflow-hidden"
+                                        >
+                                            <div className="flex flex-col md:flex-row">
+                                                {/* Thumbnail */}
+                                                <div className="md:w-48 h-48 md:h-auto relative overflow-hidden border-b-4 md:border-b-0 md:border-r-4 border-black dark:border-white flex-shrink-0">
+                                                    <img
+                                                        src={enrollment.course.thumbnail}
+                                                        alt={enrollment.course.title}
+                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <div className="w-16 h-16 bg-white dark:bg-black rounded-full flex items-center justify-center border-4 border-black dark:border-white group-hover:scale-110 transition-transform">
+                                                            <Play className="w-8 h-8 text-black dark:text-white fill-black dark:fill-white ml-1" />
                                                         </div>
                                                     </div>
-                                                    <span className="bg-piku-cyan text-black text-xs font-black uppercase px-3 py-1 rounded-md border-2 border-black">
-                                                        {enrollment.course.level}
-                                                    </span>
                                                 </div>
 
-                                                {/* Progress Bar */}
-                                                <div className="mb-4">
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <span className="text-sm font-bold text-gray-500 dark:text-gray-400">Progress</span>
-                                                        <span className="text-lg font-black text-black dark:text-white">{enrollment.progress}%</span>
+                                                {/* Content */}
+                                                <div className="flex-1 p-6 md:p-8">
+                                                    <div className="flex items-start justify-between mb-4">
+                                                        <div>
+                                                            <h3 className="text-2xl font-black text-black dark:text-white mb-2 group-hover:text-piku-purple dark:group-hover:text-piku-lime transition-colors">
+                                                                {enrollment.course.title}
+                                                            </h3>
+                                                            <div className="flex items-center gap-3 text-sm font-bold text-gray-500 dark:text-gray-400">
+                                                                <span className="flex items-center gap-1">
+                                                                    <BookOpen size={16} />
+                                                                    {enrollment.course.lessonsCount} lessons
+                                                                </span>
+                                                                <span className="flex items-center gap-1">
+                                                                    <Clock size={16} />
+                                                                    {enrollment.course.duration}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <span className="bg-piku-cyan text-black text-xs font-black uppercase px-3 py-1 rounded-md border-2 border-black">
+                                                            {enrollment.course.level}
+                                                        </span>
                                                     </div>
-                                                    <div className="h-3 bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden border-2 border-black dark:border-white">
-                                                        <motion.div
-                                                            initial={{ width: 0 }}
-                                                            animate={{ width: `${enrollment.progress}%` }}
-                                                            transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
-                                                            className="h-full bg-gradient-to-r from-piku-purple to-piku-cyan"
-                                                        />
-                                                    </div>
-                                                </div>
 
-                                                <Button className="w-full md:w-auto border-2 border-black dark:border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
-                                                    Continue Course
-                                                </Button>
+                                                    {/* Progress Bar */}
+                                                    <div className="mb-4">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <span className="text-sm font-bold text-gray-500 dark:text-gray-400">Progress</span>
+                                                            <span className="text-lg font-black text-black dark:text-white">{enrollment.progress}%</span>
+                                                        </div>
+                                                        <div className="h-3 bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden border-2 border-black dark:border-white">
+                                                            <motion.div
+                                                                initial={{ width: 0 }}
+                                                                animate={{ width: `${enrollment.progress}%` }}
+                                                                transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
+                                                                className="h-full bg-gradient-to-r from-piku-purple to-piku-cyan"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <Button className="w-full md:w-auto border-2 border-black dark:border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                                                        Continue Course
+                                                    </Button>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </motion.div>
-                                ))}
+                                        </motion.div>
+                                    ))
+                                )}
                             </div>
                         </motion.div>
 
@@ -182,8 +222,8 @@ const Dashboard: React.FC = () => {
                                         animate={{ opacity: 1, scale: 1 }}
                                         transition={{ delay: 0.6 + i * 0.01 }}
                                         className={`aspect-square rounded-lg border-2 ${day.active
-                                                ? 'bg-piku-lime border-black dark:border-white'
-                                                : 'bg-gray-100 dark:bg-zinc-800 border-gray-300 dark:border-zinc-700'
+                                            ? 'bg-piku-lime border-black dark:border-white'
+                                            : 'bg-gray-100 dark:bg-zinc-800 border-gray-300 dark:border-zinc-700'
                                             } hover:scale-110 transition-transform cursor-pointer`}
                                         title={day.date.toLocaleDateString()}
                                     />

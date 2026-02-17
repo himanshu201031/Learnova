@@ -107,9 +107,9 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                     <div className="absolute -top-12 -right-12 w-24 h-24 bg-piku-yellow rounded-full border-4 border-black opacity-20 animate-bounce hidden md:block"></div>
 
                     <div className="mb-10 text-center lg:text-left">
-                        <h2 className="text-5xl md:text-6xl font-black mb-4 text-black dark:text-white tracking-tighter italic">LOG IN</h2>
+                        <h2 className="text-5xl md:text-6xl font-black mb-4 text-black dark:text-white tracking-tighter italic uppercase">Entrance</h2>
                         <p className="text-gray-500 dark:text-gray-400 font-bold text-lg">
-                            Don't have an account? <button onClick={() => onNavigate('signup')} className="text-black dark:text-white underline decoration-4 decoration-piku-lime underline-offset-4 hover:bg-piku-lime hover:decoration-transparent transition-all px-1">Sign up free</button>
+                            Instant access to your learning galaxy.
                         </p>
                     </div>
 
@@ -119,86 +119,30 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.1 }}
+                    <div className="space-y-4">
+                        <button
+                            onClick={() => signInWithGoogle()}
+                            className="w-full flex items-center justify-center gap-4 px-6 py-8 border-4 border-black dark:border-white rounded-3xl font-black text-2xl hover:bg-piku-lime dark:hover:bg-piku-lime hover:text-black transition-all shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] bg-white dark:bg-black group"
                         >
-                            <label className="block text-xs font-black mb-2 uppercase tracking-widest text-black dark:text-white">Email Address</label>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                className="w-full px-5 py-4 rounded-xl border-4 border-black dark:border-white dark:bg-black dark:text-white focus:outline-none focus:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] focus:-translate-y-1 transition-all font-bold text-lg placeholder:font-normal"
-                                placeholder="name@example.com"
-                            />
-                        </motion.div>
+                            <span className="w-10 h-10 flex items-center justify-center bg-white rounded-full border-2 border-black group-hover:scale-110 transition-transform">
+                                <img src="https://www.google.com/favicon.ico" alt="Google" className="w-6 h-6" />
+                            </span>
+                            Sign in with Google
+                        </button>
 
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.2 }}
+                        <button
+                            onClick={() => signInWithGithub()}
+                            className="w-full flex items-center justify-center gap-4 px-6 py-8 border-4 border-black dark:border-white rounded-3xl font-black text-2xl hover:bg-piku-purple dark:hover:bg-piku-purple hover:text-white transition-all shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] bg-white dark:bg-black group"
                         >
-                            <div className="flex justify-between mb-2">
-                                <label className="block text-xs font-black uppercase tracking-widest text-black dark:text-white">Password</label>
-                                <button type="button" className="text-xs font-bold text-gray-400 hover:text-black dark:hover:text-white underline">Forgot?</button>
-                            </div>
-                            <div className="relative">
-                                <input
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    className="w-full px-5 py-4 rounded-xl border-4 border-black dark:border-white dark:bg-black dark:text-white focus:outline-none focus:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] focus:-translate-y-1 transition-all font-bold text-lg placeholder:font-normal"
-                                    placeholder="••••••••"
-                                />
-                                <Lock className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                            </div>
-                        </motion.div>
+                            <span className="w-10 h-10 flex items-center justify-center bg-black rounded-full border-2 border-white group-hover:scale-110 transition-transform">
+                                <img src="https://github.com/favicon.ico" alt="GitHub" className="w-6 h-6 invert" />
+                            </span>
+                            Sign in with GitHub
+                        </button>
+                    </div>
 
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3 }}
-                            className="pt-2"
-                        >
-                            <Button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full text-xl py-6 h-auto shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] bg-piku-purple text-white border-black dark:border-white disabled:opacity-50"
-                                size="lg"
-                            >
-                                {loading ? 'Logging in...' : 'Log In Now'}
-                            </Button>
-                        </motion.div>
-                    </form>
-
-                    <div className="mt-8 text-center">
-                        <div className="relative mb-6">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t-2 border-gray-200 dark:border-zinc-800"></div>
-                            </div>
-                            <div className="relative flex justify-center text-sm">
-                                <span className="px-4 bg-white dark:bg-zinc-900 text-gray-500 font-bold uppercase tracking-widest text-xs">Or continue with</span>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <button
-                                onClick={() => signInWithGoogle()}
-                                className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-black dark:border-white rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
-                            >
-                                Google
-                            </button>
-                            <button
-                                onClick={() => signInWithGithub()}
-                                className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-black dark:border-white rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
-                            >
-                                GitHub
-                            </button>
-                        </div>
+                    <div className="mt-12 text-center text-xs font-bold text-gray-500 uppercase tracking-widest opacity-50">
+                        Secure Authentication by Supabase
                     </div>
                 </motion.div>
             </div>

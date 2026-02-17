@@ -15,7 +15,6 @@ const Pricing = React.lazy(() => import('./components/pages/Pricing'));
 const Mentors = React.lazy(() => import('./components/pages/Mentors'));
 const Courses = React.lazy(() => import('./components/pages/Courses'));
 const Login = React.lazy(() => import('./components/pages/Login'));
-const Signup = React.lazy(() => import('./components/pages/Signup'));
 const FeaturesPage = React.lazy(() => import('./components/pages/FeaturesPage'));
 const Dashboard = React.lazy(() => import('./components/pages/Dashboard'));
 const Achievements = React.lazy(() => import('./components/pages/Achievements'));
@@ -30,7 +29,7 @@ function AppContent() {
 
   useEffect(() => {
     // If user is authenticated and on login/signup, move to dashboard
-    if (isAuthenticated && ['login', 'signup'].includes(currentPage)) {
+    if (isAuthenticated && currentPage === 'login') {
       setCurrentPage('dashboard');
     }
   }, [isAuthenticated, currentPage]);
@@ -40,13 +39,13 @@ function AppContent() {
 
     switch (currentPage) {
       case 'features':
-        return <FeaturesPage />;
+        return <FeaturesPage onNavigate={setCurrentPage} />;
       case 'pricing':
-        return <Pricing />;
+        return <Pricing onNavigate={setCurrentPage} />;
       case 'mentors':
-        return <Mentors />;
+        return <Mentors onNavigate={setCurrentPage} />;
       case 'courses':
-        return <Courses />;
+        return <Courses onNavigate={setCurrentPage} />;
       case 'dashboard':
         return isAuthenticated ? <Dashboard /> : <Login onNavigate={setCurrentPage} />;
       case 'achievements':
@@ -54,21 +53,19 @@ function AppContent() {
       case 'course-player':
         return isAuthenticated ? <CoursePlayer onNavigate={setCurrentPage} /> : <Login onNavigate={setCurrentPage} />;
       case 'community':
-        return isAuthenticated ? <Community /> : <Login onNavigate={setCurrentPage} />;
+        return isAuthenticated ? <Community onNavigate={setCurrentPage} /> : <Login onNavigate={setCurrentPage} />;
       case 'login':
         return <Login onNavigate={setCurrentPage} />;
-      case 'signup':
-        return <Signup onNavigate={setCurrentPage} />;
       default:
-        return <Home />;
+        return <Home onNavigate={setCurrentPage} />;
     }
   };
 
   // Logic to determine if Footer should be shown
-  const showFooter = !['login', 'signup', 'features', 'courses', 'mentors', 'pricing', 'dashboard', 'achievements', 'course-player'].includes(currentPage);
+  const showFooter = !['login', 'features', 'courses', 'mentors', 'pricing', 'dashboard', 'achievements', 'course-player'].includes(currentPage);
 
   // Logic to determine if Navbar should be shown (usually hidden on auth pages)
-  const showNavbar = !['login', 'signup', 'course-player'].includes(currentPage);
+  const showNavbar = !['login', 'course-player'].includes(currentPage);
 
   return (
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white font-sans transition-colors duration-500">
