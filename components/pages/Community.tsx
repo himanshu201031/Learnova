@@ -33,7 +33,13 @@ const mockDiscussionsFallback = [
 
 const categories = ["All", "General", "React", "Frontend", "Backend", "DevOps", "Data Science", "Showcase"];
 
-const Community: React.FC = () => {
+import { Page } from '../../types';
+
+interface CommunityProps {
+    onNavigate: (page: Page) => void;
+}
+
+const Community: React.FC<CommunityProps> = ({ onNavigate }) => {
     const [activeCategory, setActiveCategory] = useState("All");
     const [posts, setPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -92,7 +98,7 @@ const Community: React.FC = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.2 }}
                     >
-                        <Button size="lg" className="shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
+                        <Button onClick={() => onNavigate('login')} size="lg" className="shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
                             <MessageSquare className="mr-2" /> Start Discussion
                         </Button>
                     </motion.div>
