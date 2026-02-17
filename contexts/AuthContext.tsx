@@ -1,11 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthState } from '../types';
+import { authService } from '../services/auth.service';
+import { supabase } from '../lib/supabase';
 
 interface AuthContextType extends AuthState {
     login: (email: string, password: string) => Promise<void>;
     signup: (email: string, password: string, name: string) => Promise<void>;
-    logout: () => void;
-    updateUser: (user: Partial<User>) => void;
+    logout: () => Promise<void>;
+    updateUser: (updates: Partial<User>) => Promise<void>;
+    signInWithGoogle: () => Promise<void>;
+    signInWithGithub: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,60 +33,99 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: true,
     });
 
-    // Check for existing session on mount
+    // Initialize auth state and listen for changes
     useEffect(() => {
-        const checkAuth = async () => {
+        // Check current session
+        const initializeAuth = async () => {
             try {
-                const storedUser = localStorage.getItem('user');
-                if (storedUser) {
-                    const user = JSON.parse(storedUser);
+                const { data: session } = await authService.getSession();
+
+                if (session?.user) {
+                    const { data: userProfile } = await authService.getUserProfile(session.user.id);
+
+                    if (userProfile) {
+                        setAuthState({
+                            user: userProfile,
+                            isAuthenticated: true,
+                            isLoading: false,
+                        });
+                    } else {
+                        setAuthState({
+                            user: null,
+                            isAuthenticated: false,
+                            isLoading: false,
+                        });
+                    }
+                } else {
                     setAuthState({
-                        user,
-                        isAuthenticated: true,
+                        user: null,
+                        isAuthenticated: false,
                         isLoading: false,
                     });
-                } else {
-                    setAuthState(prev => ({ ...prev, isLoading: false }));
                 }
             } catch (error) {
-                console.error('Auth check failed:', error);
-                setAuthState(prev => ({ ...prev, isLoading: false }));
+                console.error('Auth initialization failed:', error);
+                setAuthState({
+                    user: null,
+                    isAuthenticated: false,
+                    isLoading: false,
+                });
             }
         };
 
-        checkAuth();
+        initializeAuth();
+
+        // Listen for auth state changes
+        const { data: { subscription } } = authService.onAuthStateChange(async (event, session) => {
+            console.log('Auth state changed:', event);
+
+            if (event === 'SIGNED_IN' && session?.user) {
+                const { data: userProfile } = await authService.getUserProfile(session.user.id);
+
+                if (userProfile) {
+                    setAuthState({
+                        user: userProfile,
+                        isAuthenticated: true,
+                        isLoading: false,
+                    });
+                }
+            } else if (event === 'SIGNED_OUT') {
+                setAuthState({
+                    user: null,
+                    isAuthenticated: false,
+                    isLoading: false,
+                });
+            }
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
     }, []);
 
     const login = async (email: string, password: string) => {
         try {
-            // TODO: Replace with actual API call
-            // const response = await fetch('/api/auth/login', {
-            //   method: 'POST',
-            //   headers: { 'Content-Type': 'application/json' },
-            //   body: JSON.stringify({ email, password }),
-            // });
-            // const data = await response.json();
+            setAuthState(prev => ({ ...prev, isLoading: true }));
 
-            // Mock user for now
-            const mockUser: User = {
-                id: '1',
-                email,
-                name: email.split('@')[0],
-                avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-                role: 'student',
-                createdAt: new Date(),
-                emailVerified: true,
-            };
+            const { data, error } = await authService.signIn({ email, password });
 
-            localStorage.setItem('user', JSON.stringify(mockUser));
-            localStorage.setItem('token', 'mock-jwt-token');
+            if (error) {
+                throw new Error(error);
+            }
 
-            setAuthState({
-                user: mockUser,
-                isAuthenticated: true,
-                isLoading: false,
-            });
-        } catch (error) {
+            if (data?.user) {
+                const { data: userProfile } = await authService.getUserProfile(data.user.id);
+
+                if (userProfile) {
+                    setAuthState({
+                        user: userProfile,
+                        isAuthenticated: true,
+                        isLoading: false,
+                    });
+                }
+            }
+        } catch (error: any) {
+            setAuthState(prev => ({ ...prev, isLoading: false }));
             console.error('Login failed:', error);
             throw error;
         }
@@ -90,57 +133,98 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const signup = async (email: string, password: string, name: string) => {
         try {
-            // TODO: Replace with actual API call
-            // const response = await fetch('/api/auth/signup', {
-            //   method: 'POST',
-            //   headers: { 'Content-Type': 'application/json' },
-            //   body: JSON.stringify({ email, password, name }),
-            // });
-            // const data = await response.json();
+            setAuthState(prev => ({ ...prev, isLoading: true }));
 
-            // Mock user for now
-            const mockUser: User = {
-                id: '1',
+            const { data, error } = await authService.signUp({
                 email,
-                name,
-                avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-                role: 'student',
-                createdAt: new Date(),
-                emailVerified: false,
-            };
-
-            localStorage.setItem('user', JSON.stringify(mockUser));
-            localStorage.setItem('token', 'mock-jwt-token');
-
-            setAuthState({
-                user: mockUser,
-                isAuthenticated: true,
-                isLoading: false,
+                password,
+                fullName: name,
             });
-        } catch (error) {
+
+            if (error) {
+                throw new Error(error);
+            }
+
+            // Note: User will need to verify email before they can sign in
+            // For now, we'll set loading to false
+            setAuthState(prev => ({ ...prev, isLoading: false }));
+
+            // Show success message to user about email verification
+            console.log('Signup successful! Please check your email to verify your account.');
+        } catch (error: any) {
+            setAuthState(prev => ({ ...prev, isLoading: false }));
             console.error('Signup failed:', error);
             throw error;
         }
     };
 
-    const logout = () => {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        setAuthState({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-        });
+    const logout = async () => {
+        try {
+            await authService.signOut();
+            setAuthState({
+                user: null,
+                isAuthenticated: false,
+                isLoading: false,
+            });
+        } catch (error) {
+            console.error('Logout failed:', error);
+            throw error;
+        }
     };
 
-    const updateUser = (updates: Partial<User>) => {
-        if (authState.user) {
-            const updatedUser = { ...authState.user, ...updates };
-            localStorage.setItem('user', JSON.stringify(updatedUser));
+    const updateUser = async (updates: Partial<User>) => {
+        try {
+            if (!authState.user) {
+                throw new Error('No user logged in');
+            }
+
+            const profileUpdates: any = {};
+
+            if (updates.name) profileUpdates.full_name = updates.name;
+            if (updates.avatar) profileUpdates.avatar_url = updates.avatar;
+            if (updates.bio) profileUpdates.bio = updates.bio;
+
+            const { data, error } = await authService.updateProfile(
+                authState.user.id,
+                profileUpdates
+            );
+
+            if (error) {
+                throw new Error(error);
+            }
+
+            // Update local state
             setAuthState(prev => ({
                 ...prev,
-                user: updatedUser,
+                user: prev.user ? { ...prev.user, ...updates } : null,
             }));
+        } catch (error) {
+            console.error('Update user failed:', error);
+            throw error;
+        }
+    };
+
+    const signInWithGoogle = async () => {
+        try {
+            const { error } = await authService.signInWithOAuth('google');
+            if (error) {
+                throw new Error(error);
+            }
+        } catch (error) {
+            console.error('Google sign in failed:', error);
+            throw error;
+        }
+    };
+
+    const signInWithGithub = async () => {
+        try {
+            const { error } = await authService.signInWithOAuth('github');
+            if (error) {
+                throw new Error(error);
+            }
+        } catch (error) {
+            console.error('Github sign in failed:', error);
+            throw error;
         }
     };
 
@@ -152,6 +236,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 signup,
                 logout,
                 updateUser,
+                signInWithGoogle,
+                signInWithGithub,
             }}
         >
             {children}

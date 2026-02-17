@@ -34,6 +34,7 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
+  bio?: string;
   role: 'student' | 'instructor' | 'admin';
   createdAt: Date;
   emailVerified: boolean;
