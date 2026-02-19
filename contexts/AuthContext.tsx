@@ -79,11 +79,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const { data: { subscription } } = authService.onAuthStateChange(async (event, session) => {
             console.log('Auth state changed:', event);
 
-            if (event === 'SIGNED_IN' && session?.user) {
+            if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
                 let { data: userProfile, error: profileError } = await authService.getUserProfile(session.user.id);
 
-                // If profile is missing, try to create it (especially for OAuth users)
-                if (!userProfile && !profileError) {
+                // If profile is missing (either data is null or error is "no rows found")
+                // PGRST116 is the Postgrest error for "no rows found"
+                if (!userProfile) {
                     const { data: newProfile } = await authService.updateProfile(session.user.id, {
                         full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Learner',
                         avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture

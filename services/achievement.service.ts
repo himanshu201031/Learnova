@@ -35,14 +35,28 @@ export const achievementService = {
             id,
             name,
             description,
-            xp_reward
+            xp_reward,
+            icon
           )
         `)
                 .eq('user_id', userId)
                 .order('earned_at', { ascending: false });
 
             if (error) throw error;
-            return { data, error: null };
+
+            // Map DB fields to app types
+            const mappedData = data.map((item: any) => ({
+                ...item,
+                achievement: {
+                    id: item.achievement.id,
+                    name: item.achievement.name,
+                    description: item.achievement.description,
+                    points: item.achievement.xp_reward,
+                    icon: item.achievement.icon || '🏆'
+                }
+            }));
+
+            return { data: mappedData, error: null };
         } catch (error) {
             return { data: null, error: handleSupabaseError(error) };
         }

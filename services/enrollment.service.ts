@@ -52,6 +52,8 @@ export const enrollmentService = {
             thumbnail_url,
             level,
             category,
+            lessons_count,
+            duration,
             instructor:profiles!instructor_id(
               id,
               full_name,
@@ -63,7 +65,36 @@ export const enrollmentService = {
                 .order('enrolled_at', { ascending: false });
 
             if (error) throw error;
-            return { data, error: null };
+
+            // Map DB snake_case to app camelCase
+            const mappedData: any[] = data.map(enr => ({
+                id: enr.id,
+                userId: enr.user_id,
+                courseId: enr.course_id,
+                progress: enr.progress_percentage || 0,
+                enrolledAt: new Date(enr.enrolled_at),
+                completedAt: enr.completed_at ? new Date(enr.completed_at) : undefined,
+                lastAccessedAt: new Date(enr.last_accessed_at),
+                certificateIssued: enr.certificate_issued || false,
+                course: enr.course ? {
+                    id: enr.course.id,
+                    title: enr.course.title,
+                    slug: enr.course.slug,
+                    description: enr.course.description,
+                    thumbnail: enr.course.thumbnail_url,
+                    level: enr.course.level,
+                    category: enr.course.category,
+                    lessonsCount: enr.course.lessons_count || 0,
+                    duration: enr.course.duration || '0h',
+                    instructor: {
+                        id: enr.course.instructor?.id,
+                        name: enr.course.instructor?.full_name,
+                        avatar: enr.course.instructor?.avatar_url
+                    }
+                } : null
+            })).filter(enr => enr.course !== null); // Remove enrollments with missing course data
+
+            return { data: mappedData, error: null };
         } catch (error) {
             return { data: null, error: handleSupabaseError(error) };
         }

@@ -28,8 +28,9 @@ function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    // If user is authenticated and on login/signup, move to dashboard
-    if (isAuthenticated && currentPage === 'login') {
+    // If user is authenticated and on login/home, move to dashboard
+    const authPages: Page[] = ['home', 'login'];
+    if (isAuthenticated && authPages.includes(currentPage)) {
       setCurrentPage('dashboard');
     }
   }, [isAuthenticated, currentPage]);

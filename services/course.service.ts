@@ -55,7 +55,38 @@ export const courseService = {
             const { data, error } = await query;
 
             if (error) throw error;
-            return { data, error: null };
+
+            // Map DB fields to app types
+            const mappedData: Course[] = data.map((c: any) => ({
+                id: c.id,
+                title: c.title,
+                slug: c.slug,
+                description: c.description,
+                price: c.price,
+                level: c.level,
+                category: c.category,
+                thumbnail: c.thumbnail_url,
+                rating: c.rating || 0,
+                studentsCount: c.students_count || 0,
+                duration: c.duration || '0h',
+                lessonsCount: c.lessons_count || 0,
+                tags: c.tags || [],
+                popular: c.popular || false,
+                createdAt: new Date(c.created_at),
+                updatedAt: new Date(c.updated_at),
+                instructor: {
+                    id: c.instructor?.id,
+                    name: c.instructor?.full_name,
+                    avatar: c.instructor?.avatar_url,
+                    bio: c.instructor?.bio,
+                    expertise: c.instructor?.expertise || [],
+                    coursesCount: c.instructor?.courses_count || 0,
+                    studentsCount: c.instructor?.students_count || 0,
+                    rating: c.instructor?.rating || 0
+                }
+            }));
+
+            return { data: mappedData, error: null };
         } catch (error) {
             return { data: null, error: handleSupabaseError(error) };
         }

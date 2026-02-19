@@ -17,7 +17,10 @@ const Dashboard: React.FC = () => {
 
     React.useEffect(() => {
         const fetchDashboardData = async () => {
-            if (!user) return;
+            if (!user) {
+                setLoading(false);
+                return;
+            }
             setLoading(true);
             try {
                 const { data: userEnrs } = await enrollmentService.getUserEnrollments(user.id);
@@ -26,8 +29,6 @@ const Dashboard: React.FC = () => {
                 const { data: userAchievs } = await achievementService.getUserAchievements(user.id);
                 if (userAchievs) setAchievements(userAchievs.map(ua => ua.achievement));
 
-                // Fetch stats or use mock if not implemented
-                // For now keep mockUserStats as base
             } catch (error) {
                 console.error('Failed to fetch dashboard data:', error);
             } finally {
@@ -38,9 +39,21 @@ const Dashboard: React.FC = () => {
         fetchDashboardData();
     }, [user]);
 
-    const recentAchievements = achievements.length > 0 ? achievements.slice(0, 3) : mockAchievements.slice(0, 3);
+    if (loading) return (
+        <div className="min-h-screen pt-32 flex flex-col items-center justify-center bg-gray-50 dark:bg-black">
+            <LoadingSpinner />
+            <p className="mt-4 font-bold text-gray-500 animate-pulse">Initializing your dashboard...</p>
+        </div>
+    );
 
-    if (loading) return <LoadingSpinner />;
+    if (!user) return (
+        <div className="min-h-screen pt-32 flex flex-col items-center justify-center bg-gray-50 dark:bg-black">
+            <h2 className="text-2xl font-black mb-4">Account session expired</h2>
+            <Button onClick={() => window.location.reload()}>Refresh Page</Button>
+        </div>
+    );
+
+    const recentAchievements = achievements.length > 0 ? achievements.slice(0, 3) : mockAchievements.slice(0, 3);
 
     // Calculate streak calendar (last 30 days)
     const generateStreakData = () => {
