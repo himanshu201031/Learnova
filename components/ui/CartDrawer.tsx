@@ -100,7 +100,11 @@ const CartDrawer: React.FC = () => {
                                         className="flex gap-4 p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border-2 border-gray-200 dark:border-zinc-700 hover:border-black dark:hover:border-white transition-colors group"
                                     >
                                         <div className="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0 border border-black/10">
-                                            <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover" />
+                                            <img
+                                                src={(item as any).img || item.thumbnail || `https://api.dicebear.com/7.x/shapes/svg?seed=${item.id}`}
+                                                alt={item.title}
+                                                className="w-full h-full object-cover"
+                                            />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <h4 className="font-bold text-sm text-black dark:text-white line-clamp-2 leading-tight mb-1">

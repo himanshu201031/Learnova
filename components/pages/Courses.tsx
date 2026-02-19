@@ -96,7 +96,7 @@ const Courses: React.FC = () => {
     const [priceRange, setPriceRange] = useState<'All' | 'Under 20' | '20-50' | '50+'>('All');
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
-    const { addToCart } = useCart();
+    const { addToCart, cart } = useCart();
 
     React.useEffect(() => {
         const fetchCourses = async () => {
@@ -356,6 +356,32 @@ const Courses: React.FC = () => {
                                             </div>
                                         </div>
 
+                                        {/* Always-visible Add to Cart button */}
+                                        <div className="mt-5 pt-4 border-t-2 border-black/5 dark:border-white/10">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleAddToCart(course as any);
+                                                }}
+                                                className={`w-full flex items-center justify-center gap-2 font-black text-sm py-3 px-4 rounded-xl border-2 transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] ${cart.some(item => item.id === course.id)
+                                                    ? 'bg-piku-lime text-black border-black'
+                                                    : 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white hover:bg-piku-purple hover:border-piku-purple dark:hover:bg-piku-lime dark:hover:text-black'
+                                                    }`}
+                                            >
+                                                {cart.some(item => item.id === course.id) ? (
+                                                    <>
+                                                        <span>✓ In Cart</span>
+                                                        <ShoppingBag size={16} />
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <ShoppingCart size={16} />
+                                                        <span>Add to Cart — ${course.price}</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+
                                         {/* Slide Up Details on Hover */}
                                         <div className="absolute inset-0 bg-white dark:bg-zinc-900 p-8 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex flex-col justify-center items-center text-center gap-6 z-20 border-t-4 border-black dark:border-white">
                                             <div>
@@ -366,22 +392,17 @@ const Courses: React.FC = () => {
                                                 <span className="flex items-center gap-1"><User size={18} /> {parseStudents(course.studentsCount || (course as any).students)}</span>
                                                 <span className="flex items-center gap-1"><Clock size={18} /> {course.duration || (course as any).time}</span>
                                             </div>
-
-                                            {/* Enhanced Add to Cart Button */}
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleAddToCart(course as any);
                                                 }}
-                                                className="w-full group/btn relative overflow-hidden bg-black dark:bg-white text-white dark:text-black font-black text-lg py-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-200"
+                                                className={`w-full font-black text-lg py-4 rounded-xl border-2 transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] ${cart.some(item => item.id === course.id)
+                                                    ? 'bg-piku-lime text-black border-black'
+                                                    : 'bg-black dark:bg-white text-white dark:text-black border-black'
+                                                    }`}
                                             >
-                                                <div className="relative z-10 flex items-center justify-center gap-2 group-hover/btn:-translate-y-12 transition-transform duration-300">
-                                                    <span>Add to Cart</span>
-                                                    <span className="bg-white/20 px-2 py-0.5 rounded text-xs">${course.price}</span>
-                                                </div>
-                                                <div className="absolute inset-0 flex items-center justify-center gap-2 translate-y-12 group-hover/btn:translate-y-0 transition-transform duration-300 text-piku-lime dark:text-piku-purple">
-                                                    <ShoppingBag size={20} /> Added!
-                                                </div>
+                                                {cart.some(item => item.id === course.id) ? '✓ In Cart' : `Add to Cart — $${course.price}`}
                                             </button>
                                         </div>
                                     </div>

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useLayoutEffect, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { Star, Users, TrendingUp, ArrowUpRight, Shield, Database, Cloud, Code, Terminal, Cpu, Globe, Zap } from 'lucide-react';
 
@@ -68,21 +68,35 @@ const InnerPages: React.FC = () => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [scrollWidth, setScrollWidth] = useState(0);
 
-    // Dynamic width calculation for precise scrolling
-    useLayoutEffect(() => {
+    // Dynamic width calculation using ResizeObserver for accurate layout
+    useEffect(() => {
         const updateWidth = () => {
             if (scrollContainerRef.current) {
-                // Calculate total scrollable width minus the viewport width
-                // Adding a small buffer (50px) to ensure the last card is not cut off
-                const totalWidth = scrollContainerRef.current.scrollWidth;
-                const windowWidth = window.innerWidth;
-                setScrollWidth(totalWidth - windowWidth);
+                // Use requestAnimationFrame so we measure after paint, not before
+                requestAnimationFrame(() => {
+                    if (scrollContainerRef.current) {
+                        const totalWidth = scrollContainerRef.current.scrollWidth;
+                        const windowWidth = window.innerWidth;
+                        // Extra 80px buffer so the last card is never clipped
+                        setScrollWidth(totalWidth - windowWidth + 80);
+                    }
+                });
             }
         };
 
         updateWidth();
+
+        // ResizeObserver catches layout shifts (font load, image load, etc.)
+        const observer = new ResizeObserver(updateWidth);
+        if (scrollContainerRef.current) {
+            observer.observe(scrollContainerRef.current);
+        }
+
         window.addEventListener("resize", updateWidth);
-        return () => window.removeEventListener("resize", updateWidth);
+        return () => {
+            observer.disconnect();
+            window.removeEventListener("resize", updateWidth);
+        };
     }, []);
 
     const { scrollYProgress } = useScroll({
@@ -101,7 +115,7 @@ const InnerPages: React.FC = () => {
         <section
             ref={targetRef}
             id="skills"
-            className="relative h-[800vh] bg-black dark:bg-black"
+            className="relative h-[900vh] bg-black dark:bg-black"
         >
             {/* Background Noise Texture */}
             <div className="absolute inset-0 opacity-20 pointer-events-none fixed" style={{ backgroundImage: 'radial-gradient(circle, #333 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>

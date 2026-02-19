@@ -35,28 +35,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Initialize auth state and listen for changes
     useEffect(() => {
-        // Check current session
         const initializeAuth = async () => {
+            const hasAuthHash = window.location.hash.includes('access_token=') ||
+                window.location.hash.includes('type=recovery');
+
             try {
                 const { data: session } = await authService.getSession();
 
                 if (session?.user) {
                     const { data: userProfile } = await authService.getUserProfile(session.user.id);
 
-                    if (userProfile) {
-                        setAuthState({
-                            user: userProfile,
-                            isAuthenticated: true,
-                            isLoading: false,
-                        });
-                    } else {
-                        setAuthState({
-                            user: null,
-                            isAuthenticated: false,
-                            isLoading: false,
-                        });
-                    }
-                } else {
+                    setAuthState({
+                        user: userProfile || null,
+                        isAuthenticated: !!userProfile,
+                        isLoading: false,
+                    });
+                } else if (!hasAuthHash) {
+                    // Only stop loading if there is no hash to process
+                    // If there IS a hash, we wait for onAuthStateChange to handle it
                     setAuthState({
                         user: null,
                         isAuthenticated: false,
@@ -65,11 +61,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 }
             } catch (error) {
                 console.error('Auth initialization failed:', error);
-                setAuthState({
-                    user: null,
-                    isAuthenticated: false,
-                    isLoading: false,
-                });
+                if (!hasAuthHash) {
+                    setAuthState({
+                        user: null,
+                        isAuthenticated: false,
+                        isLoading: false,
+                    });
+                }
             }
         };
 
